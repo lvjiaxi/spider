@@ -259,23 +259,23 @@ public class Spider {
      * @param html
      * @return
      */
-    public static String getList(String html){
+    public static List< Map<String,Object>> getList(String html){
 
         //获取所有满足条件的list列表规则
         Pattern p = Pattern.compile("<span class=\"s2\"><a href=\"/\\d+_(\\d+)/\">(.+?)</a></span><span class=\"s3\">");
         Matcher m = p.matcher(html);
         //存放列表信息集合
-        List< Map<String,String>> l=new ArrayList<>();
+        List< Map<String,Object>> l=new ArrayList<>();
         while (m.find()){
             //存放单行id和名称
-            Map<String,String> map=new HashMap<>();
+            Map<String,Object> map=new HashMap<>();
             //处理单条数据
             String list = m.group();
             //获取名称
             Pattern namep = Pattern.compile("<span class=\"s2\"><a href=\"/\\d+_\\d+/\">(.+?)</a></span><span class=\"s3\">");
             Matcher nameMatcher = namep.matcher(list);
             String name=null;
-            String id=null;
+            Long id=null;
             while (nameMatcher.find()){
                  name = nameMatcher.group(1);
             }
@@ -283,7 +283,7 @@ public class Spider {
             Pattern idp = Pattern.compile("<span class=\"s2\"><a href=\"/\\d+_(\\d+)/\">.+?</a></span><span class=\"s3\">");
             Matcher idMatcher = idp.matcher(list);
             while (idMatcher.find()){
-                 id = idMatcher.group(1);
+                 id = Long.valueOf(idMatcher.group(1));
             }
             if (name!=null&&id!=null){
                 map.put("id",id);
@@ -296,11 +296,24 @@ public class Spider {
         }
 //        System.out.println(JSON.toJSONString(l));
 
-        return null;
+        return l;
     }
 
     public static void main(String[] args) {
+        //第一步，获取目标列表网页
         String html = getSource("https://www.biqukan.com/");
-        String list = getList(html);
+        //第二部，获取目标列表所有的书籍id和名称
+        List<Map<String, Object>> list = getList(html);
+        for (int i = 0; i < list.size(); i++) {
+            Map<String, Object> m = list.get(i);
+            Long id =(Long) m.get("id");
+            Long subId=id/1000;
+            String url="https://www.biqukan.com/"+subId+"_"+id+"/";
+            System.out.println(url);
+            //暂时只循环一次
+            break;
+        }
+
+
     }
 }
