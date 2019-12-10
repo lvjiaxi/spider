@@ -2,4 +2,4 @@ server:
   port: 81
 logging:
   level:
-    com.spider: warn
+    com.anqun: debug
