@@ -236,8 +236,8 @@ public class Spider {
         try {
             response = httpclient.execute(httpget);
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {     // 返回 200 表示成功
-//                html = EntityUtils.toString(response.getEntity(), "gbk");     // 获取服务器响应实体的内容
-                html = EntityUtils.toString(response.getEntity());     // 获取服务器响应实体的内容
+                html = EntityUtils.toString(response.getEntity(), "gbk");     // 获取服务器响应实体的内容
+//                html = EntityUtils.toString(response.getEntity());     // 获取服务器响应实体的内容
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -299,18 +299,141 @@ public class Spider {
         return l;
     }
 
+
+    /**
+     * step.3
+     * 获取基础信息
+     * @param url
+     * @return
+     */
+    public static String getInfo(String url){
+        //获取信息页代码
+        String html = getSource(url);
+        Pattern namep = Pattern.compile("<meta property=\"og:title\" content=\"(.+?)\"/>");
+        Pattern sortp = Pattern.compile("<meta property=\"og:novel:category\" content=\"(.+?)\"/>");
+        Pattern authorp = Pattern.compile("<meta property=\"og:novel:author\" content=\"(.+?)\"/>\n");
+        Pattern introp = Pattern.compile("<meta property=\"og:description\" content=\"(?<str>[\\s|\\S]+?)\"/>\n");
+        Pattern coverp = Pattern.compile("<meta property=\"og:image\" content=\"(.+?)\"/>\n");
+        Pattern statusp = Pattern.compile("<meta property=\"og:novel:status\" content=\"(.+?)\"/>\n");
+
+        Matcher namem = namep.matcher(html);
+        Matcher sortm = sortp.matcher(html);
+        Matcher authorm = authorp.matcher(html);
+        Matcher introm = introp.matcher(html);
+        Matcher coverm = coverp.matcher(html);
+        Matcher statusm = statusp.matcher(html);
+
+        String name=null;
+        String sort=null;
+        String author=null;
+        String intro=null;
+        String cover=null;
+        String status=null;
+        while (namem.find()){
+             name = namem.group(1);
+        }
+
+        while (sortm.find()){
+             sort = sortm.group(1);
+        }
+
+        while (authorm.find()){
+             author = authorm.group(1);
+        }
+
+        while (introm.find()){
+             intro = introm.group(1);
+        }
+
+        while (coverm.find()){
+             cover = coverm.group(1);
+        }
+
+        while (statusm.find()){
+             status = statusm.group(1);
+        }
+
+        System.out.println(name);
+        System.out.println(sort);
+        System.out.println(author);
+        System.out.println(intro);
+        System.out.println(cover);
+        System.out.println(status);
+
+
+        return null;
+    }
+
+    /**
+     * step.3
+     * 获取目录
+     * @param url
+     * @return
+     */
+    public static String getDir(String url){
+        String html = getSource(url);
+        Pattern urlp= Pattern.compile("<dd><a href =\"/\\d+_\\d+/\\d+.html\">.+?</a></dd>");
+        Matcher urlm = urlp.matcher(html);
+        List<String> urls=new ArrayList<>();
+        while (urlm.find()){
+            String dirUrl = urlm.group();
+            urls.add(dirUrl);
+        }
+
+        List<Map<String,String>> chapterInfo=new ArrayList<>();
+
+        for (int i = 0; i < urls.size(); i++) {
+            //存放单个章节信息
+            Map<String,String> chapter=new HashMap<>();
+            Pattern namep = Pattern.compile("<dd><a href =\"/\\d+_\\d+/\\d+.html\">(.+?)</a></dd>");
+            Pattern idp = Pattern.compile("<dd><a href =\"/\\d+_\\d+/(\\d+).html\">.+?</a></dd>");
+            Matcher namem = namep.matcher(urls.get(i));
+            Matcher idm = idp.matcher(urls.get(i));
+            String name=null;
+            String id=null;
+
+            while (namem.find()){
+                 name = namem.group(1);
+            }
+            while (idm.find()){
+                 id = idm.group(1);
+            }
+            logger.info("正在采集章节ID："+id+" 章节名称："+name);
+            chapter.put("id",id);
+            chapter.put("name",name);
+            chapterInfo.add(chapter);
+        }
+
+
+        return null;
+    }
+
+
+    public static String getContent(String url){
+
+        return null;
+    }
+
     public static void main(String[] args) {
         //第一步，获取目标列表网页
         String html = getSource("https://www.biqukan.com/");
-        //第二部，获取目标列表所有的书籍id和名称
+        //第二步，获取目标列表所有的书籍id和名称
+        //创建存放url集合
+        List<String> urls=new ArrayList<>();
+
         List<Map<String, Object>> list = getList(html);
         for (int i = 0; i < list.size(); i++) {
             Map<String, Object> m = list.get(i);
             Long id =(Long) m.get("id");
             Long subId=id/1000;
             String url="https://www.biqukan.com/"+subId+"_"+id+"/";
-            System.out.println(url);
-            //暂时只循环一次
+            urls.add(url);
+        }
+
+        //第三步 针对每一个url，获取基本信息
+        for (int i = 0; i < urls.size(); i++) {
+            getInfo(urls.get(i));
+            getDir(urls.get(i));
             break;
         }
 
