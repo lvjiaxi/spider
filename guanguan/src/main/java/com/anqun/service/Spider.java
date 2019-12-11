@@ -408,7 +408,12 @@ public class Spider {
         return null;
     }
 
-
+    /**
+     * step.4
+     * 获取内容
+     * @param url
+     * @return
+     */
     public static String getContent(String url){
 
         return null;
