@@ -370,7 +370,7 @@ public class Spider {
      * @param url
      * @return
      */
-    public static String getDir(String url){
+    public static List<Map<String,String>> getDir(String url){
         String html = getSource(url);
         Pattern urlp= Pattern.compile("<dd><a href =\"/\\d+_\\d+/\\d+.html\">.+?</a></dd>");
         Matcher urlm = urlp.matcher(html);
@@ -405,7 +405,9 @@ public class Spider {
         }
 
 
-        return null;
+
+
+        return chapterInfo;
     }
 
     /**
@@ -436,10 +438,59 @@ public class Spider {
         }
 
         //第三步 针对每一个url，获取基本信息
+        List<Map<String, String>> dir=new ArrayList<>();
         for (int i = 0; i < urls.size(); i++) {
             getInfo(urls.get(i));
-            getDir(urls.get(i));
+             dir = getDir(urls.get(i));
             break;
+        }
+
+        if (dir.size()==0){
+            //如果采集对面的网址地址为空，将停止系统
+            return;
+        }
+        /**获取本地数据库小说章节是否存在*/
+
+        /**如果存在，取最后一个章节,通过jieqi的章节id获取*/
+        //模拟获取名称
+        String name="第二章 非常随意的测试‘’‘";
+        Integer point=null;
+
+
+        for (int i = 0; i < dir.size(); i++) {
+            String n = dir.get(i).get("name");
+            if (name.equalsIgnoreCase(n)){
+                //匹配出章节
+                point=i;
+                logger.info("获得匹配章节："+n);
+            }
+        }
+        if (point==null){
+            String name1 = Compare.clearName(name);
+            for (int i = 0; i < dir.size(); i++) {
+                String n = dir.get(i).get("name");
+                String s = Compare.clearName(n);
+                if (name1.equalsIgnoreCase(s)){
+                    //匹配出章节
+                    point=i;
+                    logger.info("获得匹配章节："+n);
+                }
+            }
+        }
+
+
+        if (point==null){
+            System.out.println("出现问题");
+            return;
+        }
+
+        if (point==dir.size()){
+            //已经是最新章节无需更新
+            return;
+        }
+        for (int i = point+1; i < dir.size(); i++) {
+            String n = dir.get(i).get("name");
+            logger.info("采集入库的章节："+n);
         }
 
 
